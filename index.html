@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <script src="http://d3js.org/d3.v3.min.js">
+    </script>
+    <script src="http://dimplejs.org/dist/dimple.v2.0.0.min.js"></script>
+    <style>
+
+    body {
+    font-family: Sans-Serif;
+    }
+    
+    main {
+      text-align: center;
+    }
+
+    div.radio.buttons {
+    float: left;
+    border: 10px;
+    border-color: red;
+    margin: auto;
+    width: 20%;
+    }
+
+    div.context {
+    float: left;
+    width: 80%;
+    display: block;
+    }
+
+    </style>
+  </head>
+<body>
+  <main> 
+    <h2></h2>
+  </main>
+	
+	<div id="chartContainer" style="height:60vh">
+  		<script type="text/javascript">
+    		function draw(data) {
+
+            var svg = d3.select("svg").remove();
+
+            d3.select("#chartContainer")
+            .style("width", "100%")
+            .style("overflow", "hidden");
+
+            var svg = dimple.newSvg("#chartContainer", "100%", "100%");
+            var myChart = new dimple.chart(svg, data);
+            myChart.defaultColors = [
+              new dimple.color("#E1FFDC"),
+              new dimple.color("#FFDCDC")
+            ];
+      			myChart.setMargins(80, 80, 80, 80);
+            var button1 = document.getElementById("Agerange");
+            var button2 = document.getElementById("Sex");
+            var button3 = document.getElementById("Pclass");
+
+            if (button1.checked){
+              var x = myChart.addCategoryAxis("x", "Agerange");
+              x.addOrderRule(["(0-10]", "(10-20]", "(20-30]", "(30-40]", "(40-50]", "(50-60]", "(60-70]", "(70-80]", "0"]);
+              x.title = "Age range"
+              d3.select("h2")
+              .text("Survival rate split by " + button1.value);
+              var content = "The first variable, age, seems to have impacted the chances of survival. <br><br>Children were most likely to survive the catastrophe (59% of survivors in a group of passengers aged 10 or less). <br><br> Only one in five people in their 70s made it out alive. <br><br>CAUTION: the chart shows only those passengers who had a listed age in the dataset";
+            }
+            else if (button2.checked) {
+              var x = myChart.addCategoryAxis("x", "Sex");
+              x.addOrderRule(["female", "male"]);
+              x.title = "Gender"
+              d3.select("h2")
+              .text("Survival rate split by " + button2.value); 
+              var content = "The second variable, gender, also seems to have impacted the chances of survival. <br><br>There is a considerable discrepancy between men and women with regard to their chances of survival. <br><br> Only one in four women <b>did not survive </b> the catastrophe.<br><br>Only one in five men <b>survived</b> the ordeal";             
+            }
+            else if (button3.checked) {
+              var x = myChart.addCategoryAxis("x", "Pclass");
+              x.addOrderRule(["1", "2", "3"]);
+              x.title = "Passenger class"
+              d3.select("h2")
+              .text("Survival rate split by " + button3.value);
+              var content = "Social status / wealth also played a role in defining one's chances of survival. <br><br>People travelling in first class were most likely to survive.<br><br> The survival rate for 2nd-class passengers was lower in comparison to 1st class passengers<br><br>Around one in four people from the third class survived the crash with an iceberg.";                 
+            }
+
+            var textbox = document.getElementById("lol");
+            textbox.innerHTML = content;
+
+            x.fontSize = '14px'
+      			var y = myChart.addPctAxis("y", "Survived");
+            y.fontSize = '14px'
+            y.title = 'Percentage of survivors'
+            y.showGridlines = false
+      			var Series = myChart.addSeries(["ClassSurvivor"], dimple.plot.bar);
+      			Series.aggregate = dimple.aggregateMethod.count;
+      			var legend = myChart.addLegend("10%", "5%", "80%", "20%", "right");
+      			myChart.draw(500);
+            svg.selectAll(".dimple-gridline").selectAll(".tick").attr("opacity", "1");
+            window.onresize = function () {
+              myChart.draw(0, true);
+            };
+          };
+
+  /*
+    Use D3 (not dimple.js) to load the TSV file
+    and pass the contents of it to the draw function
+    */
+  		d3.csv("titanic_out.csv", function(d) {
+        if (d['Agerange'] != 0){
+          return d;
+        }}
+  		, draw);
+  		</script>
+  	</div>
+  <div>
+    <div class = "radio buttons">
+      <input class = "radio-input", type = "radio", name="input", id="Agerange", value="age range", checked = "checked">
+      <label class = "radio-label", for="Agerange"> Age range </label><br>
+      <input class = "radio-input", type = "radio" name="input", id="Sex", value="sex">
+      <label class = "radio-label", for="Sex">Sex </label><br>
+      <input class = "radio-input", type = "radio" name="input", id="Pclass", value="passenger class">
+      <label class = "radio-label", for="Pclass">Passenger class </label>
+      <script>
+          
+
+          d3.select("#Agerange").on("click", function(){
+            d3.csv("titanic_out.csv", function(d) {
+              if (d['Agerange'] != 0){
+          return d;
+          }}, draw);
+          });
+          d3.select("#Sex").on("click", function() {
+            d3.csv("titanic_out.csv", function(d) {
+              return d;
+            }, draw);
+          });
+          d3.select("#Pclass").on("click", function(){
+            d3.csv("titanic_out.csv", function(d) {
+              return d;
+            }, draw);
+          });
+        </script>
+      </div>
+      <div class = "context", id="lol">
+      </div>
+    </div>
+</body>
+</html>
