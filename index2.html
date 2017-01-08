@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.min.js">
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dimple/2.1.6/dimple.latest.min.js"></script>
+    <style>
+
+    body {
+    font-family: Sans-Serif;
+    }
+    
+    main {
+      text-align: center;
+    }
+
+    h2 {
+      margin: 10px 0px 0px 0px;
+    }
+
+    div.container2 {
+      margin: 0px 40px 0px 40px;
+    }
+
+    /* style for panel with radio buttons and content panel - they will be displayed next to each other.
+    Words will be broken and wrapped if the size of the window gets too small. */
+    
+    div.radiobuttons {
+    float: left;
+    margin: auto;
+    width: 20%;
+    word-wrap: break-word;
+    }
+
+    div.context {
+    float: left;
+    width: 80%;
+    display: block;
+    word-wrap: break-word;
+    }
+
+    </style>
+  </head>
+<body>
+  <main> 
+    <h2></h2>
+  </main>
+	<div id="chartContainer" style="height:60vh">
+  		<script type="text/javascript">
+    		function draw(data) {
+
+            /* Each render begins with deleting whatever svg is already on the page.
+            As a result, charts will not duplicate while changing radio buttons. */
+
+            var svg = d3.select("svg").remove();
+
+            d3.select("#chartContainer")
+            .style("width", "100%")
+            .style("overflow", "hidden");
+
+            /* Then the new svg and chart are initialized. */
+
+            var svg = dimple.newSvg("#chartContainer", "100%", "100%");
+            var myChart = new dimple.chart(svg, data);
+
+            /* Color pallette and margins are introduced below. */
+
+            myChart.defaultColors = [
+              new dimple.color("#4F47C7"),
+              new dimple.color("#ADABC7")
+            ];
+      			myChart.setMargins(80, 80, 80, 80);
+
+            /* Each radio button is assigned to a variable. */
+
+            var button0 = document.getElementById("introduction");
+            var button1 = document.getElementById("Agerange");
+            var button2 = document.getElementById("Sex");
+            var button3 = document.getElementById("Pclass");
+
+            /* Depending on which button is checked at the moment, different content is displayed.
+            This includes both the chart title, the description and most importantly, different 
+            variables on x-axis */
+
+            if (button0.checked){
+              d3.select("h2")
+              .text("Demographics of survival during the Titanic crash - introduction");
+              var content = "Titanic crashed into an iceberg on Monday, 15 April 1912. <br><br> It is estimated that some 1,500 people died as a result of the catastrophe. <br><br> The available dataset looks at almost 900 passengers who were aboard on that fateful night. Travellers are described by some common demographic metrics, such as gender, age or passenger class they travelled on.<br><br> Based on the available data, we can see (by hovering over the pie chart slice) that over around one in three people survived the ordeal. The question is, were some people more likely to survive than others? What determined the chances of survival? <b>Please choose different radio buttons to look at different characteristics that played a crucial role.</b>";
+            }
+
+            else if (button1.checked){
+              var x = myChart.addCategoryAxis("x", "Agerange");
+              x.addOrderRule(["(0-20]", "(20-40]", "(40-60]", "(60-80]", "0"]);
+              x.title = "Age range"
+              d3.select("h2")
+              .text("Survival rate split by " + button1.value);
+              var content = "The first variable, age, seems to have impacted the chances of survival. <br><br>Children were most likely to survive the catastrophe (almost 46% of survivors in a group of passengers aged 20 or less). <br><br> Only one in over four people in their 60s or 70s made it out alive. <br><br><b>CAUTION: the chart shows only those passengers who had a listed age in the dataset</b>";
+            }
+            else if (button2.checked) {
+              var x = myChart.addCategoryAxis("x", "Sex");
+              x.addOrderRule(["female", "male"]);
+              x.title = "Sex"
+              d3.select("h2")
+              .text("Survival rate split by " + button2.value); 
+              var content = "The second variable, gender, also seems to have impacted the chances of survival. <br><br>There is a considerable discrepancy between men and women with regard to their chances of survival. <br><br> Only one in four women <b>did not survive </b> the catastrophe.<br><br>Only one in five men <b>survived</b> the ordeal";             
+            }
+            else if (button3.checked) {
+              var x = myChart.addCategoryAxis("x", "Pclass");
+              x.addOrderRule(["1", "2", "3"]);
+              x.title = "Passenger class"
+              d3.select("h2")
+              .text("Survival rate split by " + button3.value);
+              var content = "Social status / wealth also played a role in defining one's chances of survival. <br><br>People travelling in first class were most likely to survive.<br><br> The survival rate for 2nd-class passengers was lower in comparison to 1st class passengers<br><br>Around one in four people from the third class survived the crash with an iceberg.";                 
+            }
+
+            /* Description is passed into the corresponding html element and shown on the webpage. */
+
+            var textbox = document.getElementById("descr");
+            textbox.innerHTML = content;
+
+           /* Continuation of conditionals that help display certain content depending on which button is
+           checked. Here, elements that are identical for buttons 1 to 3 fall under one condition, whereas
+           elements typical only for button0 are under the other condition */
+
+            if (button0.checked) {
+              myChart.addMeasureAxis("p", "Survived");
+              var Series = myChart.addSeries(["ClassSurvivor"], dimple.plot.pie);
+              Series.aggregate = dimple.aggregateMethod.count;
+              Series.tooltipFontSize = "14px";
+            }
+
+            else {
+              x.fontSize = '14px'
+              var y = myChart.addPctAxis("y", "Survived");
+              y.fontSize = '14px'
+              y.title = 'Percentage of survivors'
+              y.showGridlines = false
+              var Series = myChart.addSeries(["ClassSurvivor"], dimple.plot.bar);
+              Series.aggregate = dimple.aggregateMethod.count;
+
+              /* Custom tooltip is used; font size is increased for better visibility. */
+
+              Series.getTooltipText = function (e) {
+                var button = document.querySelector('input[name = "input"]:checked').value;
+                return [
+                    button + ": " + e.cx,
+                    "status" + ": " + e.aggField,
+                    "count" + ": " + e.yCount + " (" + (e.height*100).toFixed(2) + "%)",                
+                    ];
+              };
+              Series.tooltipFontSize = "14px";
+            }
+
+            /* Legend is the same for all views, so it is coded out of the conditions */
+
+            var legend = myChart.addLegend("10%", "5%", "80%", "20%", "right");
+            legend.fontSize = '14px'
+      			myChart.draw(500);
+
+            /* The chart and legend size are coded as percentages. The lines below help to resize
+            the chart every time the size of the window is changed */
+
+            window.onresize = function () {
+              myChart.draw(0, true);
+            };
+          };
+
+  /* CSV file is passed to the draw function */
+  		d3.csv("titanic_out2.csv", function(d) {
+          return d;
+        }
+  		, draw);
+  		</script>
+  	</div>
+  <div class = "container2">
+    <div class = "radiobuttons">
+      <input class = "radio-input", type = "radio", name="input", id="introduction", value="introduction", checked = "checked">
+      <label class = "radio-label", for="Agerange"> Introduction </label><br>
+      <input class = "radio-input", type = "radio", name="input", id="Agerange", value="age range">
+      <label class = "radio-label", for="Agerange"> Age range </label><br>
+      <input class = "radio-input", type = "radio" name="input", id="Sex", value="sex">
+      <label class = "radio-label", for="Sex">Sex </label><br>
+      <input class = "radio-input", type = "radio" name="input", id="Pclass", value="passenger class">
+      <label class = "radio-label", for="Pclass">Passenger class </label>
+      <script>
+
+          /* data is loaded and the chart is drawn depending on which button is checked.
+          For age variable, where many records did not have a specified value, only those that
+          did are pulled into the chart. The first view will always be introduction, as the radio button
+          for introduction is checked by default */
+
+          d3.select("#introduction").on("click", function(){
+            d3.csv("titanic_out2.csv", function(d) {
+          return d;
+          }, draw);
+          });
+          d3.select("#Agerange").on("click", function(){
+            d3.csv("titanic_out2.csv", function(d) {
+              if (d['Agerange'] != 0){
+          return d;
+          }}, draw);
+          });
+          d3.select("#Sex").on("click", function() {
+            d3.csv("titanic_out2.csv", function(d) {
+              return d;
+            }, draw);
+          });
+          d3.select("#Pclass").on("click", function(){
+            d3.csv("titanic_out2.csv", function(d) {
+              return d;
+            }, draw);
+          });
+        </script>
+      </div>
+      <div class = "context", id="descr">
+      </div>
+    </div>
+</body>
+</html>
